@@ -39,7 +39,7 @@ jobs:
           if [ -n "$SDKM" ]; then
             yes | "$SDKM" --licenses > /dev/null || true
             # Build-Tools 36.0.0 ist der Standard von AGP 9.5; so muss beim Build nichts nachgeladen werden.
-            "$SDKM" "platforms;android-37" "build-tools;36.0.0"
+            "$SDKM" "platforms;android-37.2" "build-tools;36.0.0"
           fi
           echo "sdk.dir=$SDK" > "$PROJECT_DIR/local.properties"
 
