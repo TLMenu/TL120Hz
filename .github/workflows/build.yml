@@ -1,30 +1,67 @@
-name: Build APK
+name: TL 120Hz - Android APK Build
+
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: read
+
 jobs:
   build:
+    name: Build TL 120Hz APK
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - name: Entpacken
-        run: unzip -q TL120Hz-project.zip
-      - uses: actions/setup-java@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
-      - name: Android-SDK vorbereiten
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 35
         run: |
-          yes | sdkmanager --licenses > /dev/null || true
-          sdkmanager "platforms;android-35" "build-tools;34.0.0" || true
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: 8.10.2
-      - name: Debug-APK bauen
-        working-directory: TL120Hz
-        run: gradle assembleDebug --no-daemon
-      - uses: actions/upload-artifact@v4
+          sdkmanager "platforms;android-35"
+          sdkmanager "build-tools;35.0.0"
+
+      - name: Validate Project
+        run: |
+          test -f settings.gradle.kts
+          test -f app/build.gradle.kts
+          test -f app/src/main/AndroidManifest.xml
+
+      - name: Build Debug APK
+        run: gradle --no-daemon clean assembleDebug
+
+      - name: Build Release APK
+        run: gradle --no-daemon assembleRelease
+
+      - name: Rename APK Files
+        run: |
+          mkdir -p output
+
+          cp app/build/outputs/apk/debug/app-debug.apk \
+            output/TL120Hz-debug.apk
+
+          cp app/build/outputs/apk/release/app-release.apk \
+            output/TL120Hz-release.apk
+
+      - name: Upload APK Artifacts
+        uses: actions/upload-artifact@v4
         with:
           name: TL120Hz-APK
-          path: TL120Hz/app/build/outputs/apk/debug/*.apk
+          path: output/*.apk
+          if-no-files-found: error
+          retention-days: 30   
